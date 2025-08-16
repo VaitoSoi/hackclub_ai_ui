@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from lib.api import init as api_init
+from lib.api import close, init as api_init
 from lib.db import init as db_init
 from routes.ai import router as ai_router
 from routes.user import router as user_router
@@ -13,6 +13,7 @@ async def lifespan(app: FastAPI):
     await db_init()
     await api_init()
     yield
+    await close()
 
 app = FastAPI(
     title="Hackclub AI Wrapper",
