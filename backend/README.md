@@ -4,12 +4,58 @@
 
 This is a simple FastAPI app, use JWT for token creation, SQLite (default) as database, SQLModel (aiosqlite) for interacting with database and aiohttp to interact with model.
 
-## II. Endpoints
+## II. Conversation structure
+
+You can image the conversation structure as a tree, where each node is a message from user or from model. It work like how ChatGPT conversations work, when you edit an message, a new conversation is create yet keep the old one.
+
+```
+System prompt
+|
+Assistant
+|    \
+User  U <- Users edit a message, create a new branch
+|     |
+A     A <- Model continue as a new conversation
+|     | \
+U     U  U <- Create a new branch when users edit their message
+|     |
+A     A
+|
+U
+|
+...
+```
+
+
+## III. Endpoints
+
+### 1. AI
+
+
+```
+System prompt
+|
+Assistant <- GET /ai/children Get all direct children of this message
+|    \     |
+User  U <--+ Expect to return these messages ID
+|     |
+A     A
+|     |
+U     U <- GET /ai/conversation Get all message from the newest branch
+|
+A <- /ai/conversation?message Get all message from branch that contain the message in query
+|
+U <--+
+|    |
+... <- POST /ai/prompt Send message message base on previous message ID, allowing create new branch
+```
+
+### 2. User
 
 * I'm too lazy to list there 😭
 * Please visit the endpoint `/docs` for more information ;-;
 
-## III. Environments
+## IV. Environments
 
 |Name|Default value|Accept value|Note|
 |----|-------------|------------|----|
@@ -19,7 +65,7 @@ This is a simple FastAPI app, use JWT for token creation, SQLite (default) as da
 |`UVICORN_PORT`|`8000`|A number from 0-65535|Only used when you run this app with uvicorn|
 |`UVICORN_HOST`|`127.0.0.1`|An valid IP|Only used when you run this app with uvicorn|
 
-## IV. How to run
+## V. How to run
 
 ### 1. With FastAPI CLI
 
