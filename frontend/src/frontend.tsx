@@ -8,12 +8,35 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./components/App";
+import { createBrowserRouter, RouterProvider } from "react-router";
+import NewChat from "./pages/NewChat";
+import Chat from "./pages/Chat";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import NotFound from "./pages/NotFound";
+import { Toaster } from "sonner";
+
+const router = createBrowserRouter([
+    { path: "/", element: <App><NewChat /></App> },
+    { path: "/chat/:id", element: <App><Chat /></App> },
+    {
+        path: "/login", element: <>
+            <Toaster /><Login />
+        </>
+    },
+    {
+        path: "/signup", element: <>
+            <Toaster /><Signup />
+        </>
+    },
+    { path: "/*", element: <App><NotFound /></App> },
+]);
 
 const elem = document.getElementById("root")!;
 const app = (
-    <StrictMode>
-        <App />
-    </StrictMode>
+    // <StrictMode>
+    <RouterProvider router={router} />
+    // </StrictMode>
 );
 
 if (import.meta.hot) {
