@@ -8,6 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from lib.db import (
     DBUser,
+    UpdateUser,
     User,
     UserWithPassword,
     delete_user,
@@ -166,7 +167,7 @@ async def create_user(user: UserWithPassword):
 )
 async def update_user_api(
     user: Annotated[User, Depends(get_user_from_token)],
-    new_user: User,
+    new_user: UpdateUser,
 ):
     try:
         new_user_ = await update_user(new_user, username=user.username)

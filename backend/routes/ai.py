@@ -7,16 +7,18 @@ from lib.api import (
     CreateConversationRequest,
     CreateConversationResponse,
     SendPromptRequest,
+    SendPromptResponse,
     create_conversation,
     send_prompt,
 )
 from lib.db import (
     DBConversation,
-    MessageWithBranch,
+    GetConversationResponse,
     MessageWithId,
     User,
     delete_conversation,
     get_branch_info,
+    get_conversation,
     get_conversations,
     get_latest_message_of_conversation,
     get_message,
@@ -80,7 +82,7 @@ async def raise_if_error(
 
 
 @router.get(
-    "/model", description="Get available models", responses={200: {"model": list[str]}}
+    "/models", description="Get available models", responses={200: {"model": list[str]}}
 )
 async def get_models():
     from lib.api import model_list
@@ -103,7 +105,7 @@ async def get_conversations_api(
 @router.get(
     "/conversation",
     description="Get all messages in a conversation",
-    responses={200: {"model": list[MessageWithBranch]}},
+    responses={200: {"model": list[GetConversationResponse]}},
 )
 async def get_conversation_api(
     id: str,
@@ -113,8 +115,13 @@ async def get_conversation_api(
 ):
     async def _iner():
         await user_can_see_conversation(user.id, id, session)
+        conversation = await get_conversation(id, session)
         latest_message = await get_latest_message_of_conversation(id, message, session)
-        return await get_branch_info(latest_message.id, session)
+        return GetConversationResponse(
+            model_id=conversation.model_id,
+            title=conversation.title,
+            messages=await get_branch_info(latest_message.id, session)
+        )
 
     return await raise_if_error(_iner)
 
@@ -161,7 +168,7 @@ async def new_conversation_api(
 @router.post(
     "/prompt",
     description="Send new message follow up message",
-    responses={200: {"model": MessageWithId}},
+    responses={200: {"model": SendPromptResponse}},
 )
 async def send_prompt_api(
     user: Annotated[User, Depends(get_user_from_token)],
