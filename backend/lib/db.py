@@ -4,7 +4,7 @@ from typing import Awaitable, Callable, Optional, TypeVar
 from uuid import uuid4
 
 from argon2.exceptions import VerifyMismatchError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field as PydanticField
 from sqlalchemy.ext.asyncio import (
     AsyncAttrs,
     AsyncSession,
@@ -60,12 +60,12 @@ class BaseConversation(SQLModel):
     id: str = Field(default_factory=lambda: uuid4().__str__(), primary_key=True)
     model_id: str
     title: str = Field(default="")
-    user_id: str = Field(foreign_key="user.id")
 
 
 class DBConversation(BaseConversation, table=True):
     __tablename__ = "conversation"  # type: ignore
 
+    user_id: str = Field(foreign_key="user.id")
     messages: list["DBMessage"] = Relationship(back_populates="conversation")
 
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -121,6 +121,15 @@ class MessageWithBranch(MessageWithId):
     branch: Optional[BranchInfo]
 
 
+class GetConversationResponse(BaseConversation):
+    messages: list[MessageWithBranch]
+
+class UpdateUser(BaseModel):
+    username: Optional[str] = PydanticField(default=None)
+    password: Optional[str] = PydanticField(default=None)
+    model_personality: Optional[str] = PydanticField(default=None)
+
+
 engine = create_async_engine(DB_URL)
 
 
@@ -173,7 +182,11 @@ async def get_conversations(
     user: User, session: AsyncSession | None = None
 ) -> list[DBConversation]:
     async def _iner(session: AsyncSession):
-        statement = select(DBConversation).where(DBConversation.user_id == user.id)
+        statement = (
+            select(DBConversation)
+            .where(DBConversation.user_id == user.id)
+            .order_by(desc(DBConversation.created_at))
+        )
         return list((await session.execute(statement)).scalars().all())
 
     return await create_session_and_run(_iner, session)
@@ -300,7 +313,7 @@ async def create_new_conversation(
         await session.commit()
 
         return (
-            BaseConversation(id=conversation_id, model_id=model_id, user_id=user.id),
+            BaseConversation(id=conversation_id, model_id=model_id),
             MessageWithId(
                 role="system",
                 reasoning=None,
@@ -447,7 +460,6 @@ async def delete_conversation(
     return await create_session_and_run(_iner, session)
 
 
-
 """
 USER
 """
@@ -560,7 +572,7 @@ async def new_user(new_user: UserWithPassword):
 
 # UPDATE
 async def update_user(
-    new_user: User,
+    new_user: UpdateUser,
     id: str | None = None,
     username: str | None = None,
     session: AsyncSession | None = None,
@@ -574,7 +586,7 @@ async def update_user(
                 continue
 
             if db_user_dump[key] != value:
-                if key == "username":
+                if key == "username" and value:
                     if not _check_valid_username(value):
                         raise InvalidUsername()
 
@@ -606,7 +618,7 @@ async def update_user(
         session.add(db_user)
         await session.commit()
 
-        return await get_user_db(username=new_user.username, session=session)
+        return await get_user_db(username=db_user.username, session=session)
 
     return await create_session_and_run(_iner, session)
 
