@@ -4,15 +4,13 @@ import api from "@/lib/api";
 import type { GetUserReponse } from "@/lib/typing";
 import { AxiosError } from "axios";
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
 
 export default function() {
-    const navigator = useNavigate();
     const token = localStorage.getItem("token");
 
     useEffect(() => void init(), []);
     async function init() {
-        if (!token) return navigator("/login");
+        if (!token) return;
 
         try {
             await api.get<GetUserReponse>(`/user/me`, {
