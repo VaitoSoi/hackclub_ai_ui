@@ -7,9 +7,18 @@ This is a simple UI for Hackclub AI.
 
 ## II. Setup
 
-Not ready yet :_D
+1. Pull [this repo](https://github.com/vaitosoi/hackclub_ai_ui/)
+2. Create file `docker.env` with follow content:
 
-To see how to setup API, please see [Backend Readme](./backend/README.md)
+    ```
+    SIGNATURE=<A random string>
+    USE_HASH=false
+    UVICORN_HOST=0.0.0.0
+
+    UI_BACKEND=http://localhost:8000
+    ```
+3. Run `docker compose up`
+4. Go to [the web](http://localhost:8080) and use it :D
 
 ## III. Components
 
