@@ -71,10 +71,12 @@ class CreateConversationRequest(UserPrompt):
 class SendPromptRequest(UserPrompt):
     message_id: str
 
+class SendPromptResponse(BaseModel):
+    user: MessageWithId
+    model: MessageWithId
 
-class CreateConversationResponse(BaseModel):
+class CreateConversationResponse(SendPromptResponse):
     conversation: BaseConversation
-    message: MessageWithId
 
 
 session: ClientSession
@@ -119,7 +121,7 @@ async def create_conversation(
         )
         model_reponse = await send_prompt(new_message.id, message, session)
         return CreateConversationResponse(
-            conversation=new_conversation, message=model_reponse
+            conversation=new_conversation, **model_reponse.model_dump()
         )
 
     return await create_session_and_run(_iner, session)
@@ -127,14 +129,17 @@ async def create_conversation(
 
 async def send_prompt(
     follow_message_id: str, message: str, session: AsyncSession | None = None
-) -> MessageWithId:
+) -> SendPromptResponse:
     async def _iner(session: AsyncSession):
         user_message = await follow_up(
             follow_message_id,
             MessageWithReasoning(content=message, role="user", reasoning=None),
             session,
         )
-        return await _send_prompt(user_message, user_message.conversation, session)
+        return SendPromptResponse(
+            user=MessageWithId(**user_message.model_dump()),
+            model=await _send_prompt(user_message, user_message.conversation, session)
+        )
 
     return await create_session_and_run(_iner, session)
 
