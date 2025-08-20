@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from lib.api import close, init as api_init
 from lib.db import init as db_init
@@ -25,3 +26,12 @@ app = FastAPI(
 
 app.include_router(ai_router)
 app.include_router(user_router)
+
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
