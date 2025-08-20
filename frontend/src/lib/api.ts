@@ -1,6 +1,6 @@
 import axios from "axios";
 
 export default axios.create({
-    baseURL: "https://ai.hackclub.com/",
-    timeout: 10_000
+    baseURL: process.env.UI_BACKEND || "http://localhost:8000",
+    timeout: 60_000
 });
