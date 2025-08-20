@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - 8000:8000
+    env_file: docker.env
+    volumes:
+      - ./backend/data:/backend/data
+    networks:
+      - hc_ai_ui
+
+  frontend:
+    build: ./frontend
+    ports:
+      - 8080:8080
+    env_file: docker.env
+    networks:
+      - hc_ai_ui
+
+networks:
+  hc_ai_ui:
+    driver: bridge
